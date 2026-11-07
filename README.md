@@ -1,4 +1,3 @@
-# tm4c123-elevator-controller
 # Two-Player Reaction Timer | TM4C123
 
 A two-player reaction game written in bare-metal C for the TI Tiva C Series TM4C123GH6PM LaunchPad. After a random waiting period, a green LED signals both players to press their buttons. The firmware compares button timestamps, indicates the winner, and handles false starts and ties.
