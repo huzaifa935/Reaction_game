@@ -33,66 +33,24 @@ typedef enum {
  */
 volatile reaction_state_t state = STATE_IDLE;
 
-/*
- * Milliseconds since SysTick started.
- *
- * This variable must be DEFINED in exactly systick .c file, and the
- * SysTick interrupt handler must increment it every 1 ms.
- *
- * I changed your original "extern uint32_t" to "extern volatile uint32_t"
- * because an interrupt changes its value asynchronously.
- */
+
 extern volatile uint32_t count_ms;
 
-/*
- * Each button's debounce phase:
- *
- * 0: No press is being checked; wait for a falling-edge interrupt.
- * 1: An interrupt happened; check for four stable LOW samples.
- * 2: Press confirmed; wait for four stable HIGH release samples.
- *
- * The GPIO interrupt handler changes 0 -> 1.
- * deboucing() changes 1 -> 2, then eventually 2 -> 0.
- */
+
 volatile uint8_t sw1_press = 0U, sw2_press = 0U;
 volatile uint8_t f1_press = 0U, f2_press = 0U;
 
-/*
- * Consecutive-sample counters for each switch.
- *
- * "down" counts LOW (pressed) samples.
- * "up" counts HIGH (released) samples.
- *
- * Each switch needs its own counters so activity on one switch does not
- * change the debounce progress of another switch.
- */
+
 uint8_t sw1_down = 0U, sw2_down = 0U;
 uint8_t f1_down = 0U, f2_down = 0U;
 
 uint8_t sw1_up = 0U, sw2_up = 0U;
 uint8_t f1_up = 0U, f2_up = 0U;
 
-/*
- * Times of the contestants' first detected falling edges.
- *
- * These are captured in the GPIO interrupt handlers, BEFORE the
- * 40 ms debounce process finishes. Their unit is milliseconds.
- *
- * They are volatile because interrupt handlers write them and the
- * main loop reads them.
- */
+
 volatile uint32_t f1_count = 0U, f2_count = 0U;
 
-/*
- * State at the time of each contestant's first falling edge:
- *
- * 0: The edge happened outside READYON/GO.
- * 1: The edge happened during READYON -> possible false start.
- * 2: The edge happened during GO      -> possible valid hit.
- *
- * Saving this in the interrupt handler matters because the game state
- * might change before debounce finishes.
- */
+
 volatile uint8_t f1_stage = 0U, f2_stage = 0U;
 
 /*
@@ -661,7 +619,6 @@ void state_machine(void)
 
 int main(void)
 {
-    /* Establish the intended system clock before configuring timing. */
     pll_configure();
 
     /* Configure contestant 1, contestant 2/LEDs, and onboard controls. */
@@ -669,19 +626,11 @@ int main(void)
     PortB_Init();
     PortF_Init();
 
-    /*
-     * Your helper takes clock frequency and period IN MILLISECONDS.
-     * At 80 MHz, a 1 ms interval uses 80,000 cycles and reload 79,999.
-     */
     SysTick_SetPeriodAndStart(80000000U, 1U);
 
     /* Permit the periodic SysTick interrupt to run. */
     SysTick_EnableInterrupt(1U);
 
-    /*
-     * Keep checking events and elapsed times.
-     * state_machine() returns each pass; it does not wait for a switch.
-     */
     while (1)
         state_machine();
 }
